@@ -12,7 +12,7 @@ COPY system_files /system_files
 # 
 # ... and so on, here are more base images
 # Universal Blue Images: https://github.com/orgs/ublue-os/packages
-FROM Fedora base image: quay.io/fedora/fedora-bootc:44
+FROM quay.io/fedora/fedora-bootc:44
 # CentOS base images: quay.io/centos-bootc/centos-bootc:stream10
 
 ### [IM]MUTABLE /opt
