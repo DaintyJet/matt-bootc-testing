@@ -1,5 +1,5 @@
 # Allow build scripts to be referenced without being copied into the final image
-FROM scratch AS ctx
+FROM quay.io/fedora/fedora-bootc:44 AS ctx
 COPY build_files /
 COPY system_files /system_files
 
