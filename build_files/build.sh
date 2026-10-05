@@ -1,7 +1,9 @@
 #!/bin/bash
 
-set -ouex pipefail
+# Local testing podman build -t ghcr.io/daintyjet/matt-bootc-testing:latest .
 
+set -ouex pipefail
+echo "keepcache=True" >> /etc/dnf/dnf.conf
 # Copy the contents of system_files/ of the git repo to /
 cp -avf "/ctx/system_files"/. /
 
@@ -13,20 +15,27 @@ cp -avf "/ctx/system_files"/. /
 # https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/updates/43/x86_64/repoview/index.html&protocol=https&redirect=1
 
 # Base installs
-dnf5 install -y tmux zsh nvim fzf
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+dnf5 install -y tmux zsh nvim git curl fzf tmux dnf5-plugins
+dnf5 install -y @kde-desktop-environment sddm
+dnf5 group install -y development-tools c-development kde-desktop
 
-# Normal Things
-curl -fsS https://dl.brave.com/install.sh | sh
-flatpak install flathub net.hovancik.Stretchly
-sudo dnf group install -y development-development c-development 
+# sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+# cp /etc/skel/.oh-my-zsh/templates/zshrc.zsh-template /etc/skel/.zshrc
+
+
+# I am not so smart...
+curl -fsSLo /etc/yum.repos.d/brave-browser.repo https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
+dnf5 install -y brave-browser
+
 # Languages/Programming
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+export RUSTUP_HOME=/usr/local/rustup
+export CARGO_HOME=/usr/local/cargo
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
+ln -sf /usr/local/cargo/bin/* /usr/bin/
 
-sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc &&
+rpm --import https://packages.microsoft.com/keys/microsoft.asc &&
 echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\nautorefresh=1\ntype=rpm-md\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/vscode.repo > /dev/null
-dnf check-update &&
-sudo dnf install code
+dnf install -y code 
 
 # Use a COPR Example:
 #
@@ -37,4 +46,13 @@ sudo dnf install code
 
 #### Example for enabling a System Unit File
 
+# Possible Fix Suggested by LLM for nuking fstab
+if [ -f /etc/fstab ]; then
+    sed -i '\|^[^#]*\s/\s|s|^|# |' /etc/fstab
+fi
+
+# Graphical
+systemctl set-default graphical.target
+
+# Base Boot C
 systemctl enable podman.socket
